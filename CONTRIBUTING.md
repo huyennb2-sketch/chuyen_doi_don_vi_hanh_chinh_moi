@@ -6,7 +6,7 @@ Cảm ơn bạn đã quan tâm đến dự án! Mọi đóng góp đều đượ
 
 ### Báo lỗi
 
-1. Kiểm tra [Issues](https://github.com/huyennb2-sketch/diachinh/issues) xem lỗi đã được báo chưa
+1. Kiểm tra [Issues](https://github.com/huyennb2-sketch/chuyen_doi_don_vi_hanh_chinh_moi/issues) xem lỗi đã được báo chưa
 2. Tạo issue mới với:
    - Địa chỉ đầu vào
    - Kết quả thực tế
