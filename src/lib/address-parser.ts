@@ -377,12 +377,13 @@ export function convertAddress(text: string, direction: 'new_to_old' | 'old_to_n
     }
   }
 
-  // Attach detail prefix and build full_address
-  if (detail) {
-    result.detail = detail;
+  // Merge detail from extractNoise and from convertNewToOld's extra parts
+  const allDetail = [detail, result.detail].filter(Boolean).join(', ') || null;
+  if (allDetail) {
+    result.detail = allDetail;
     if (result.result) {
       const adminParts = [result.result.commune, result.result.district, result.result.province].filter(Boolean);
-      result.result.full_address = detail + ', ' + adminParts.join(', ');
+      result.result.full_address = allDetail + ', ' + adminParts.join(', ');
     }
   } else if (result.result) {
     const adminParts = [result.result.commune, result.result.district, result.result.province].filter(Boolean);
@@ -408,6 +409,27 @@ function convertNewToOld(
 
   const rows = db.prepare(query).all(...params) as MappingRow[];
   const allScored: Array<{ row: MappingRow; score: number }> = [];
+  let extraDetail: string | null = null;
+
+  // New system = xã + tỉnh (2 parts). If remaining has 2+ parts, one is likely detail (thôn/village)
+  // Find which part best matches a new commune, treat others as detail
+  if (remaining.length >= 2) {
+    let bestPartIdx = -1;
+    let bestPartScore = 0;
+    for (let i = 0; i < remaining.length; i++) {
+      for (const row of rows) {
+        const score = scoreCommune(remaining[i], row.new_commune_name || '', row.new_commune_name_normalized);
+        if (score > bestPartScore) {
+          bestPartScore = score;
+          bestPartIdx = i;
+        }
+      }
+    }
+    if (bestPartIdx >= 0 && bestPartScore >= 65) {
+      extraDetail = remaining.filter((_, i) => i !== bestPartIdx).join(', ');
+      remaining = [remaining[bestPartIdx]];
+    }
+  }
 
   for (const part of remaining) {
     for (const row of rows) {
@@ -447,7 +469,7 @@ function convertNewToOld(
   const topScore = scored[0].score;
   const bestWithOld = scored.find(s => s.row.old_commune_name && s.score >= topScore - 5);
   const best = bestWithOld ? bestWithOld.row : scored[0].row;
-  return {
+  const convertResult: ConvertResult = {
     input: text,
     direction: 'new_to_old',
     result: best.old_commune_name
@@ -472,6 +494,10 @@ function convertNewToOld(
         }))
       : undefined,
   };
+  if (extraDetail) {
+    convertResult.detail = extraDetail;
+  }
+  return convertResult;
 }
 
 function findDistrictMatch(
