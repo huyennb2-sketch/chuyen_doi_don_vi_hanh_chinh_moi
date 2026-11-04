@@ -574,8 +574,29 @@ function convertOldToNew(
 
   // If district matched and no commune parts left, return all communes in that district
   const communeRemaining = districtMatch ? districtMatch.remainingParts : remaining;
-  const communeParts = communeRemaining.filter(p => !hasDistrictPrefix(p));
+  let communeParts = communeRemaining.filter(p => !hasDistrictPrefix(p));
   const allParts = communeRemaining;
+  let extraDetail: string | null = null;
+
+  // Old system = xã + huyện + tỉnh. After district+province extraction, only 1 part should be xã.
+  // If 2+ commune parts remain, find the best commune match, treat rest as detail.
+  if (communeParts.length >= 2) {
+    let bestPartIdx = -1;
+    let bestPartScore = 0;
+    for (let i = 0; i < communeParts.length; i++) {
+      for (const row of rows) {
+        const score = scoreCommune(communeParts[i], row.old_commune_name || '', row.old_commune_name_normalized);
+        if (score > bestPartScore) {
+          bestPartScore = score;
+          bestPartIdx = i;
+        }
+      }
+    }
+    if (bestPartIdx >= 0 && bestPartScore >= 65) {
+      extraDetail = communeParts.filter((_, i) => i !== bestPartIdx).join(', ');
+      communeParts = [communeParts[bestPartIdx]];
+    }
+  }
 
   const allScored: Array<{ row: MappingRow; score: number }> = [];
 
@@ -640,7 +661,7 @@ function convertOldToNew(
   const topScore = scored[0].score;
   const bestWithNew = scored.find(s => s.row.new_commune_name && s.score >= topScore - 5);
   const best = bestWithNew ? bestWithNew.row : scored[0].row;
-  return {
+  const convertResult: ConvertResult = {
     input: text,
     direction: 'old_to_new',
     result: best.new_commune_name
@@ -664,4 +685,8 @@ function convertOldToNew(
         }))
       : undefined,
   };
+  if (extraDetail) {
+    convertResult.detail = extraDetail;
+  }
+  return convertResult;
 }
