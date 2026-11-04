@@ -23,7 +23,7 @@ Công cụ này chuyển đổi **tự động** giữa 2 hệ thống:
 
 ## Demo
 
-🌐 **Live**: [diachinh.vn](https://diachinh.vn) *(coming soon)*
+🌐 **Live**: [chuyentendonvihanhchinh.com](https://chuyentendonvihanhchinh.com)
 
 ## API
 
@@ -92,14 +92,14 @@ GET /api/convert?text=thon+Binh+Phien,+xa+Ngoc+Lien,+Cam+Giang,+Hai+Duong&direct
 ### cURL
 
 ```bash
-curl "https://diachinh.vn/api/convert?text=phuong+cam+pha+quang+ninh&direction=new_to_old"
+curl "https://chuyentendonvihanhchinh.com/api/convert?text=phuong+cam+pha+quang+ninh&direction=new_to_old"
 ```
 
 ### JavaScript / TypeScript
 
 ```javascript
 const res = await fetch(
-  'https://diachinh.vn/api/convert?' + new URLSearchParams({
+  'https://chuyentendonvihanhchinh.com/api/convert?' + new URLSearchParams({
     text: 'Phường Cẩm Phả, Quảng Ninh',
     direction: 'new_to_old',
   })
@@ -114,7 +114,7 @@ console.log(data.result.full_address);
 ```python
 import requests
 
-res = requests.get('https://diachinh.vn/api/convert', params={
+res = requests.get('https://chuyentendonvihanhchinh.com/api/convert', params={
     'text': 'Phường Cẩm Phả, Quảng Ninh',
     'direction': 'new_to_old',
 })
@@ -127,7 +127,7 @@ print(data['result']['full_address'])
 
 ```php
 $res = file_get_contents(
-    'https://diachinh.vn/api/convert?' . http_build_query([
+    'https://chuyentendonvihanhchinh.com/api/convert?' . http_build_query([
         'text' => 'Phường Cẩm Phả, Quảng Ninh',
         'direction' => 'new_to_old',
     ])

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.SITE_URL || 'https://diachinh.vn';
+  const baseUrl = process.env.SITE_URL || 'https://chuyentendonvihanhchinh.com';
   return [
     {
       url: baseUrl,
