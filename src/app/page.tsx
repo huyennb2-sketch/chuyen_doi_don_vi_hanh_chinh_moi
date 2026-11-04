@@ -10,7 +10,9 @@ interface ConvertResult {
     commune: string;
     district?: string;
     province: string;
+    full_address?: string;
   } | null;
+  detail?: string;
   original: {
     commune: string;
     district?: string;
@@ -94,6 +96,7 @@ export default function Home() {
 
   const formatResult = (r: ConvertResult): string => {
     if (!r.result) return "Không tìm thấy";
+    if (r.result.full_address) return r.result.full_address;
     if (r.result.district) {
       return `${r.result.commune}, ${r.result.district}, ${r.result.province}`;
     }
