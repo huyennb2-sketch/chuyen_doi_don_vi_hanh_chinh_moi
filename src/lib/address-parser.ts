@@ -248,6 +248,14 @@ function scoreCommune(
 
   if (!needleClean || !rowClean) return 0;
 
+  // Diacritic-aware: compare original (with diacritics) before normalized
+  const needleOrigLower = needle.toLowerCase().trim();
+  const rowOrigLower = rowName.toLowerCase().trim();
+  const rowOrigClean = rowOrigLower.replace(/^(phường|xã|thị trấn|phuong|xa|thi tran)\s+/, '');
+  const needleOrigClean = needleOrigLower.replace(/^(phường|xã|thị trấn|phuong|xa|thi tran)\s+/, '');
+  if (rowOrigLower === needleOrigLower) return 100;
+  if (rowOrigClean === needleOrigClean && needleOrigClean.length >= 2) return 98;
+
   if (rowNorm === needleNorm) return 100;
   if (rowClean === needleClean) return 95;
 
