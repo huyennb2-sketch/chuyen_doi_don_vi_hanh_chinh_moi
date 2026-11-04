@@ -321,8 +321,39 @@ export default function Home() {
           <h2 className="text-xl font-bold mb-4">API cho nhà phát triển</h2>
           <p className="mb-4" style={{ color: "var(--muted)" }}>
             Tích hợp chuyển đổi địa chỉ vào hệ thống của bạn (vận chuyển,
-            TMĐT, ERP...) với các endpoint sau:
+            TMĐT, ERP...). API miễn phí, không cần đăng ký.
           </p>
+
+          {/* Hướng dẫn sử dụng */}
+          <div
+            className="rounded-lg p-4 mb-6"
+            style={{
+              background: "#eff6ff",
+              border: "1px solid #bfdbfe",
+            }}
+          >
+            <h3 className="font-semibold text-sm mb-2" style={{ color: "#1e40af" }}>Cách sử dụng API</h3>
+            <p className="text-sm mb-2" style={{ color: "#1e3a5f" }}>
+              Base URL: <code className="px-1.5 py-0.5 rounded text-xs font-bold" style={{ background: "#dbeafe" }}>https://chuyentendonvihanhchinh.com</code>
+            </p>
+            <p className="text-sm mb-3" style={{ color: "#1e3a5f" }}>
+              Gọi API bằng cách thêm endpoint vào sau base URL. Ví dụ:
+            </p>
+            <div className="space-y-2 text-xs" style={{ fontFamily: "var(--font-mono), monospace", color: "#1e3a5f" }}>
+              <p><strong>cURL:</strong></p>
+              <code className="block p-2 rounded overflow-x-auto" style={{ background: "#dbeafe" }}>
+                {`curl "https://chuyentendonvihanhchinh.com/api/convert?text=phuong+cam+pha,+quang+ninh&direction=new_to_old"`}
+              </code>
+              <p className="mt-2"><strong>JavaScript:</strong></p>
+              <code className="block p-2 rounded overflow-x-auto" style={{ background: "#dbeafe" }}>
+                {`const res = await fetch("https://chuyentendonvihanhchinh.com/api/convert?text=...&direction=new_to_old");`}
+              </code>
+              <p className="mt-2"><strong>Python:</strong></p>
+              <code className="block p-2 rounded overflow-x-auto" style={{ background: "#dbeafe" }}>
+                {`requests.get("https://chuyentendonvihanhchinh.com/api/convert", params={"text": "...", "direction": "new_to_old"})`}
+              </code>
+            </div>
+          </div>
 
           <div className="space-y-4">
             <ApiEndpoint
@@ -378,6 +409,29 @@ export default function Home() {
                 2
               )}
             </pre>
+          </div>
+
+          {/* Links */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a
+              href="https://github.com/huyennb2-sketch/chuyen_doi_don_vi_hanh_chinh_moi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+              style={{ background: "#24292f" }}
+            >
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              GitHub
+            </a>
+            <a
+              href="/api-docs.md"
+              download="API-chuyentendonvihanhchinh.md"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{ background: "var(--primary)", color: "#fff" }}
+            >
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
+              Tải tài liệu API (.md)
+            </a>
           </div>
         </section>
 
