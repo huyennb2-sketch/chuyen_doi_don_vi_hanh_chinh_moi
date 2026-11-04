@@ -146,7 +146,7 @@ echo $data['result']['full_address'];
 ### Cài đặt
 
 ```bash
-git clone https://github.com/your-username/diachinh.git
+git clone https://github.com/huyennb2-sketch/diachinh.git
 cd diachinh
 npm install
 ```
@@ -227,8 +227,8 @@ npm start
 
 Mọi đóng góp đều được hoan nghênh! Xem [CONTRIBUTING.md](CONTRIBUTING.md).
 
-- 🐛 Báo lỗi: [Issues](https://github.com/your-username/diachinh/issues)
-- 💡 Đề xuất: [Discussions](https://github.com/your-username/diachinh/discussions)
+- 🐛 Báo lỗi: [Issues](https://github.com/huyennb2-sketch/diachinh/issues)
+- 💡 Đề xuất: [Discussions](https://github.com/huyennb2-sketch/diachinh/discussions)
 - 🔀 Pull Request: Fork → Branch → Commit → PR
 
 ## License
