@@ -393,7 +393,6 @@ function convertNewToOld(
   }
 
   const rows = db.prepare(query).all(...params) as MappingRow[];
-  // Try each remaining part as potential commune name, pick the best overall
   const allScored: Array<{ row: MappingRow; score: number }> = [];
 
   for (const part of remaining) {
@@ -405,7 +404,6 @@ function convertNewToOld(
     }
   }
 
-  // Also try joining all remaining as one commune name
   if (remaining.length > 1) {
     const joined = remaining.join(' ');
     for (const row of rows) {
@@ -462,54 +460,124 @@ function convertNewToOld(
   };
 }
 
+function findDistrictMatch(
+  parts: string[],
+  db: ReturnType<typeof getDb>,
+  provinceCode: string | null,
+): { districtCode: string; districtName: string; remainingParts: string[] } | null {
+  let query = `SELECT DISTINCT old_district_code, old_district_name, old_district_name_normalized FROM dia_chi_mapping WHERE old_district_name IS NOT NULL`;
+  const params: string[] = [];
+  if (provinceCode) {
+    query += ` AND (old_province_code = ? OR new_province_code = ?)`;
+    params.push(provinceCode, provinceCode);
+  }
+  const districts = db.prepare(query).all(...params) as Array<{ old_district_code: string; old_district_name: string; old_district_name_normalized: string }>;
+
+  let bestIdx = -1;
+  let bestScore = 0;
+  let bestDistrict: typeof districts[0] | null = null;
+
+  for (let i = 0; i < parts.length; i++) {
+    const partNorm = normalize(parts[i]);
+    const partClean = partNorm.replace(/^(quan|huyen|thanh pho|tp|thi xa|tx)\s+/, '');
+    for (const d of districts) {
+      const dClean = (d.old_district_name_normalized || normalize(d.old_district_name)).replace(/^(quan|huyen|thanh pho|tp|thi xa|tx)\s+/, '');
+      let score = 0;
+      if (dClean === partClean) score = 100;
+      else if (dClean === partNorm) score = 95;
+      else {
+        const lev = levenshteinScore(partClean, dClean);
+        if (lev >= 80) score = lev;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestIdx = i;
+        bestDistrict = d;
+      }
+    }
+  }
+
+  if (bestDistrict && bestScore >= 80) {
+    return {
+      districtCode: bestDistrict.old_district_code,
+      districtName: bestDistrict.old_district_name,
+      remainingParts: parts.filter((_, idx) => idx !== bestIdx),
+    };
+  }
+  return null;
+}
+
 function convertOldToNew(
   text: string,
   db: ReturnType<typeof getDb>,
   remaining: string[],
   provinceMatch: { provinceCode: string; provinceName: string } | null
 ): ConvertResult {
+  // Try to identify a district from the remaining parts (first within province, then globally)
+  let districtMatch = findDistrictMatch(remaining, db, provinceMatch?.provinceCode || null);
+  if (!districtMatch && provinceMatch) {
+    districtMatch = findDistrictMatch(remaining, db, null);
+  }
+
   let query = `SELECT * FROM dia_chi_mapping WHERE old_commune_name IS NOT NULL`;
   const params: string[] = [];
 
-  if (provinceMatch) {
+  if (districtMatch) {
+    query += ` AND old_district_code = ?`;
+    params.push(districtMatch.districtCode);
+  } else if (provinceMatch) {
     query += ` AND (old_province_code = ? OR new_province_code = ?)`;
     params.push(provinceMatch.provinceCode, provinceMatch.provinceCode);
   }
 
   const rows = db.prepare(query).all(...params) as MappingRow[];
 
+  // If district matched and no commune parts left, return all communes in that district
+  const communeRemaining = districtMatch ? districtMatch.remainingParts : remaining;
+  const communeParts = communeRemaining.filter(p => !hasDistrictPrefix(p));
+  const allParts = communeRemaining;
+
   const allScored: Array<{ row: MappingRow; score: number }> = [];
-  const communeParts = remaining.filter(p => !hasDistrictPrefix(p));
-  const allParts = remaining;
 
-  for (const row of rows) {
-    let bestCommuneScore = 0;
-    let districtBonus = 0;
-
-    // Try non-district parts as commune (skip parts like "Quận 3" — they're districts, not communes)
-    for (const part of communeParts) {
-      const cs = scoreCommune(part, row.old_commune_name || '', row.old_commune_name_normalized);
-      if (cs > bestCommuneScore) bestCommuneScore = cs;
+  if (districtMatch && (communeParts.length === 0 || communeParts.every(p => p.trim().length < 2))) {
+    // No meaningful commune specified — list all communes in this district
+    for (const row of rows) {
+      allScored.push({ row, score: 50 });
     }
+  } else {
+    for (const row of rows) {
+      let bestCommuneScore = 0;
+      let districtBonus = 0;
 
-    // Try joined commune parts
-    if (communeParts.length > 1) {
-      const joined = communeParts.join(' ');
-      const cs = scoreCommune(joined, row.old_commune_name || '', row.old_commune_name_normalized);
-      if (cs > bestCommuneScore) bestCommuneScore = cs;
-    }
+      for (const part of communeParts) {
+        const cs = scoreCommune(part, row.old_commune_name || '', row.old_commune_name_normalized);
+        if (cs > bestCommuneScore) bestCommuneScore = cs;
+      }
 
-    // District bonus: check if any part matches the district
-    if (bestCommuneScore > 0 && row.old_district_name) {
-      for (const part of allParts) {
-        const ds = scoreDistrict(part, row.old_district_name, row.old_district_name_normalized);
-        if (ds > districtBonus) districtBonus = ds;
+      if (communeParts.length > 1) {
+        const joined = communeParts.join(' ');
+        const cs = scoreCommune(joined, row.old_commune_name || '', row.old_commune_name_normalized);
+        if (cs > bestCommuneScore) bestCommuneScore = cs;
+      }
+
+      if (!districtMatch && bestCommuneScore > 0 && row.old_district_name) {
+        for (const part of allParts) {
+          const ds = scoreDistrict(part, row.old_district_name, row.old_district_name_normalized);
+          if (ds > districtBonus) districtBonus = ds;
+        }
+      }
+
+      const totalScore = bestCommuneScore + districtBonus;
+      if (totalScore > 0) {
+        allScored.push({ row, score: totalScore });
       }
     }
 
-    const totalScore = bestCommuneScore + districtBonus;
-    if (totalScore > 0) {
-      allScored.push({ row, score: totalScore });
+    // If district matched but no commune scored well, fall back to listing all in district
+    if (allScored.length === 0 && districtMatch) {
+      for (const row of rows) {
+        allScored.push({ row, score: 50 });
+      }
     }
   }
 
