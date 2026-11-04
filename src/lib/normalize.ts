@@ -77,7 +77,7 @@ const NOISE_PATTERNS = [
   /^(?:(?:số|so)\s*)?\d+[a-zA-Z]?(?:[\s]*[\/\\-]\s*\d+)*\s*/i,
   /\b(?:đường|duong|phố|pho|đ\.)\s+[^\s,]+(?:\s+[^\s,]+){0,3}/gi,
   /\b(?:ngõ|ngo|ngách|ngach|hẻm|hem)\s+\d+[a-zA-Z]?(?:\s*[\/\\-]\s*\d+)*/gi,
-  /\b(?:thôn|thon|ấp|ap|xóm|xom|tổ|to|khu phố|khu pho|khu|kp)\s+[^\s,]+(?:\s+\d+)*/gi,
+  /\b(?:thôn|thon|ấp|ap|xóm|xom|tổ|to|khu phố|khu pho|khu|kp)\s+[^\s,]+(?:\s+[^\s,]+)?(?:\s+\d+)*/gi,
   /\b(?:tòa|toa|chung cư|chung cu|cc|lô|lo|block|blk)\s+[^\s,]+/gi,
   /\b(?:số nhà|so nha|nhà số|nha so|sn)\s*\d+[a-zA-Z]?/gi,
 ];
@@ -88,6 +88,22 @@ export function stripNoise(text: string): string {
     result = result.replace(pattern, ' ');
   }
   return result.replace(/\s+/g, ' ').trim();
+}
+
+export function extractNoise(text: string): { detail: string; cleaned: string } {
+  const parts: string[] = [];
+  let result = text;
+  for (const pattern of NOISE_PATTERNS) {
+    result = result.replace(pattern, (match) => {
+      const trimmed = match.trim();
+      if (trimmed) parts.push(trimmed);
+      return ' ';
+    });
+  }
+  return {
+    detail: parts.join(', '),
+    cleaned: result.replace(/\s+/g, ' ').trim(),
+  };
 }
 
 const ADMIN_PREFIXES = /^(phuong|xa|thi tran|quan|huyen|thanh pho|tp|thi xa|tx|tinh)\s+/;

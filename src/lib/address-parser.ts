@@ -1,5 +1,5 @@
 import { getDb } from './db';
-import { normalize, expandAbbreviations, fuzzyScore, stripNoise, stripAdminPrefix, levenshteinScore } from './normalize';
+import { normalize, expandAbbreviations, fuzzyScore, stripNoise, extractNoise, stripAdminPrefix, levenshteinScore } from './normalize';
 import { PROVINCE_ALIASES } from './aliases';
 
 interface MappingRow {
@@ -22,11 +22,13 @@ interface MappingRow {
 export interface ConvertResult {
   input: string;
   direction: 'new_to_old' | 'old_to_new';
+  detail?: string;
   result: {
     commune_code: string;
     commune: string;
     district?: string;
     province: string;
+    full_address?: string;
   } | null;
   original: {
     commune: string;
@@ -297,10 +299,10 @@ function scoreDistrict(
 export function convertAddress(text: string, direction: 'new_to_old' | 'old_to_new'): ConvertResult {
   const db = getDb();
 
-  // Step 1: Clean input
+  // Step 1: Clean input — extract detail (house number, street, village) before stripping
   let cleaned = stripPhone(text);
-  cleaned = stripNoise(cleaned);
-  cleaned = expandAbbreviations(cleaned);
+  const { detail, cleaned: noNoise } = extractNoise(cleaned);
+  cleaned = expandAbbreviations(noNoise);
 
   // Step 2: Smart split
   const parts = smartSplit(cleaned);
@@ -371,8 +373,20 @@ export function convertAddress(text: string, direction: 'new_to_old' | 'old_to_n
     }
     if (fallback.result) {
       fallback.direction = otherDirection;
-      return fallback;
+      result = fallback;
     }
+  }
+
+  // Attach detail prefix and build full_address
+  if (detail) {
+    result.detail = detail;
+    if (result.result) {
+      const adminParts = [result.result.commune, result.result.district, result.result.province].filter(Boolean);
+      result.result.full_address = detail + ', ' + adminParts.join(', ');
+    }
+  } else if (result.result) {
+    const adminParts = [result.result.commune, result.result.district, result.result.province].filter(Boolean);
+    result.result.full_address = adminParts.join(', ');
   }
 
   return result;
