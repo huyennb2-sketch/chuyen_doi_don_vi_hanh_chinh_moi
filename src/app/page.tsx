@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 interface ConvertResult {
   input: string;
@@ -26,6 +26,11 @@ interface ConvertResult {
   error?: string;
 }
 
+interface SiteStats {
+  total_visits: number;
+  total_conversions: number;
+}
+
 export default function Home() {
   const [direction, setDirection] = useState<"new_to_old" | "old_to_new">(
     "new_to_old"
@@ -34,6 +39,14 @@ export default function Home() {
   const [results, setResults] = useState<ConvertResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
+  const [stats, setStats] = useState<SiteStats | null>(null);
+
+  useEffect(() => {
+    fetch("/api/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "visit" }) })
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
   const handleConvert = useCallback(async () => {
     if (!input.trim()) return;
@@ -54,6 +67,10 @@ export default function Home() {
       );
       const data = await Promise.all(promises);
       setResults(data);
+      fetch("/api/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "conversion" }) })
+        .then((r) => r.json())
+        .then(setStats)
+        .catch(() => {});
     } catch {
       setResults([
         {
@@ -400,6 +417,18 @@ export default function Home() {
           className="max-w-4xl mx-auto px-4 text-center text-xs"
           style={{ color: "var(--muted)" }}
         >
+          {stats && (
+            <p className="mb-2">
+              <span style={{ color: "var(--primary)", fontWeight: 600 }}>
+                {stats.total_visits.toLocaleString("vi-VN")}
+              </span>{" "}
+              lượt truy cập &middot;{" "}
+              <span style={{ color: "var(--success)", fontWeight: 600 }}>
+                {stats.total_conversions.toLocaleString("vi-VN")}
+              </span>{" "}
+              lượt chuyển đổi
+            </p>
+          )}
           <p>
             Dữ liệu từ{" "}
             <a

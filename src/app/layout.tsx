@@ -37,10 +37,22 @@ export const metadata: Metadata = {
       "Công cụ chuyển đổi địa chỉ hành chính Việt Nam giữa hệ 2 cấp mới và 3 cấp cũ. API miễn phí cho tích hợp hệ thống vận chuyển, TMĐT.",
     type: "website",
     locale: "vi_VN",
+    siteName: "Chuyển đổi Địa chỉ Hành chính VN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chuyển đổi Địa chỉ Hành chính Việt Nam",
+    description: "Chuyển đổi giữa hệ 2 cấp mới (34 tỉnh) và 3 cấp cũ (63 tỉnh). API miễn phí.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+    },
   },
   alternates: {
     canonical: "/",
